@@ -1,73 +1,120 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace ConsoleApp1
 {
     class Program
     {
-        static string[] results = new string[50];
-        static char key;
-        static Tuple<string, string> names;
-        static ConsolePrinter printer = new ConsolePrinter();
-
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            printer.Value("Press ? to get instructions.").ToString();
-            if (Console.ReadLine() == "?")
+            CNController cNController = new CNController();
+            ConsolePrinter printer = new ConsolePrinter();
+            char enteredKey;
+            Tuple<string, string> names = null;
+            printer.Value("Welcome to Joke Generator.").Print();
+            // Line gap
+            printer.Value("").Print();
+            bool doExit = false;
+            string selectedCategory = null;
+            int noOfJokesRequested = 0;
+
+            while (!doExit)
             {
-                while (true)
+                // Line gap
+                printer.Value("").Print();
+                printer.Value("Press a to get a joke").Print();
+                printer.Value("Press r to get random jokes").Print();
+                printer.Value("Press x to exit").Print();
+                // Line gap
+                printer.Value("").Print();
+
+                enteredKey = GetEnteredKey(Console.ReadKey());
+                if (enteredKey == 'a')
                 {
-                    printer.Value("Press c to get categories").ToString();
-                    printer.Value("Press r to get random jokes").ToString();
-                    GetEnteredKey(Console.ReadKey());
-                    if (key == 'c')
+                    noOfJokesRequested = 1;
+                }
+                if (enteredKey == 'r')
+                {
+                    printer.Value("Want to use a random name? y/n").Print();
+                    char nameKey = GetEnteredKey(Console.ReadKey());
+                    if (nameKey == 'y')
+                        names = await cNController.GetNames();
+
+                    printer.Value("Want to specify a category? y/n").Print();
+                    char catKey = GetEnteredKey(Console.ReadKey());
+                    if (catKey == 'y')
                     {
-                        getCategories();
-                        PrintResults();
+                        selectedCategory = await GetEnteredCategory(printer, cNController);
                     }
-                    if (key == 'r')
-                    {
-                        printer.Value("Want to use a random name? y/n").ToString();
-                        GetEnteredKey(Console.ReadKey());
-                        if (key == 'y')
-                            GetNames();
-                        printer.Value("Want to specify a category? y/n").ToString();
-                        if (key == 'y')
-                        {
-                            printer.Value("How many jokes do you want? (1-9)").ToString();
-                            int n = Int32.Parse(Console.ReadLine());
-                            printer.Value("Enter a category;").ToString();
-                            GetRandomJokes(Console.ReadLine(), n);
-                            PrintResults();
-                        }
-                        else
-                        {
-                            printer.Value("How many jokes do you want? (1-9)").ToString();
-                            int n = Int32.Parse(Console.ReadLine());
-                            GetRandomJokes(null, n);
-                            PrintResults();
-                        }
-                    }
-                    names = null;
+
+                    noOfJokesRequested = GetNumberOfJokes(printer);
+                }
+
+                if (enteredKey == 'a' || enteredKey == 'r')
+                {
+                    printer.Value("Getting Jokes... ").Print();
+                    await GetRandomJokes(names, selectedCategory, noOfJokesRequested, cNController, printer).ConfigureAwait(false);
+                }
+
+                if (enteredKey == 'x')
+                {
+                    printer.Value("Bye for now.").Print();
+                    doExit = true;
                 }
             }
-
         }
 
-        private static void PrintResults()
+        private static async Task<string> GetEnteredCategory(ConsolePrinter printer, CNController cNController)
         {
-            printer.Value("[" + string.Join(",", results) + "]").ToString();
+            string selectedCategory = string.Empty;
+            bool isValidCategory = false;
+            printer.Value("Getting list of Categories....").Print();
+            var categories = await cNController.GetCategories().ConfigureAwait(false);
+            printer.Value("Following is list of Categories....").Print();
+            printer.PrintResults(categories.ToArray());
+
+            while (!isValidCategory)
+            {
+                // Line gap
+                printer.Value("").Print();
+                printer.Value("Enter a Category").Print();
+                selectedCategory = Console.ReadLine();
+                if (categories.Contains(selectedCategory))
+                    isValidCategory = true;
+                else
+                    printer.Value("Please enter valid Category. Please take a look at the list printed above.").Print();
+            }
+
+            return selectedCategory;
         }
 
-        private static void GetEnteredKey(ConsoleKeyInfo consoleKeyInfo)
+        private static int GetNumberOfJokes(ConsolePrinter printer)
         {
+            bool isValidNumber = false;
+            int? noOfJokes = 0;
+            while (!isValidNumber)
+            {
+                printer.Value("How many jokes do you want? (1-9)").Print();
+                var input = GetEnteredKey(Console.ReadKey());
+
+                noOfJokes = Convert.ToInt32(input.ToString());
+                if (noOfJokes != null && noOfJokes >= 1 && noOfJokes <= 9)
+                    isValidNumber = true;
+                else
+                    printer.Value("Please enter valid number between 1-9").Print();
+            }
+
+            return noOfJokes.Value;
+        }
+
+        private static char GetEnteredKey(ConsoleKeyInfo consoleKeyInfo)
+        {
+            char key = ' ';
             switch (consoleKeyInfo.Key)
             {
+                case ConsoleKey.A:
+                    key = 'a';
+                    break;
                 case ConsoleKey.C:
                     key = 'c';
                     break;
@@ -76,6 +123,9 @@ namespace ConsoleApp1
                     break;
                 case ConsoleKey.D1:
                     key = '1';
+                    break;
+                case ConsoleKey.D2:
+                    key = '2';
                     break;
                 case ConsoleKey.D3:
                     key = '3';
@@ -101,29 +151,23 @@ namespace ConsoleApp1
                 case ConsoleKey.R:
                     key = 'r';
                     break;
+                case ConsoleKey.X:
+                    key = 'x';
+                    break;
                 case ConsoleKey.Y:
                     key = 'y';
                     break;
             }
+
+            return key;
         }
 
-        private static void GetRandomJokes(string category, int number)
+        private static async Task GetRandomJokes(Tuple<string, string> names, string category, int number, CNController cNController, ConsolePrinter printer)
         {
-            new JsonFeed("https://api.chucknorris.io", number);
-            results = JsonFeed.GetRandomJokes(names?.Item1, names?.Item2, category);
-        }
-
-        private static void getCategories()
-        {
-            new JsonFeed("https://api.chucknorris.io", 0);
-            results = JsonFeed.GetCategories();
-        }
-
-        private static void GetNames()
-        {
-            new JsonFeed("https://www.names.privserv.com/api/", 0);
-            dynamic result = JsonFeed.Getnames();
-            names = Tuple.Create(result.name.ToString(), result.surname.ToString());
+            string firstName = names != null ? names.Item1 : "";
+            string lastName = names != null ? names.Item2 : "";
+            var result = await cNController.GetRandomJokes(firstName, lastName, category, number).ConfigureAwait(false);
+            printer.PrintResults(result, true);
         }
     }
 }

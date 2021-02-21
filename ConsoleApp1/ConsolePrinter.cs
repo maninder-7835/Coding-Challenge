@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace ConsoleApp1
 {
     public class ConsolePrinter
     {
-        public static object PrintValue;
+        public object PrintValue;
+
+        public ConsolePrinter()
+        {
+        }
 
         public ConsolePrinter Value(string value)
         {
@@ -18,10 +16,20 @@ namespace ConsoleApp1
             return this;
         }
 
-        public override string ToString()
+        public void Print()
         {
             Console.WriteLine(PrintValue);
-            return null;
+        }
+
+        public void PrintResults(string [] results, bool printMultipleLines = false)
+        {
+            if (printMultipleLines)
+            {
+                for (int i = 0; i < results.Length; i++)
+                    Value(i + 1 + " " + results[i]).Print();
+            }
+            else
+                Value("[" + string.Join(",", results) + "]").Print();
         }
     }
 }
