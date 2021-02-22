@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ConsoleApp1
 {
-    class JsonFeed
+    public class JsonFeed : IJsonFeed
     {
         static string _url = "";
 
@@ -15,6 +15,13 @@ namespace ConsoleApp1
             _url = endpoint;
         }
 
+        /// <summary>
+        /// Getting Random Jokes 
+        /// </summary>
+        /// <param name="firstname"></param>
+        /// <param name="lastname"></param>
+        /// <param name="category"></param>
+        /// <returns></returns>
         public static string[] GetRandomJokes(string firstname, string lastname, string category)
         {
             try
@@ -51,6 +58,14 @@ namespace ConsoleApp1
             }
         }
 
+        /// <summary>
+        /// Async version of getting Random jokes
+        /// </summary>
+        /// <param name="firstname"></param>
+        /// <param name="lastname"></param>
+        /// <param name="category"></param>
+        /// <param name="noOfJokes"></param>
+        /// <returns></returns>
         public async Task<string[]> GetRandomJokesAsync(string firstname, string lastname, string category, int noOfJokes)
         {
             try
@@ -71,7 +86,6 @@ namespace ConsoleApp1
 
                     for (int i = 1; i <= noOfJokes; i++)
                     {
-                        
                         string joke = (JsonConvert.DeserializeObject<dynamic>(await client.GetStringAsync(url).ConfigureAwait(false))).value;
 
                         if (!string.IsNullOrEmpty(firstname) && !string.IsNullOrEmpty(lastname))
@@ -111,6 +125,10 @@ namespace ConsoleApp1
             }
         }
 
+        /// <summary>
+        /// Async version of getting Names
+        /// </summary>
+        /// <returns></returns>
         public async Task<dynamic> GetNamesAsync()
         {
             try
@@ -128,6 +146,10 @@ namespace ConsoleApp1
             }
         }
 
+        /// <summary>
+        /// Getting categories 
+        /// </summary>
+        /// <returns></returns>
         public static string[] GetCategories()
         {
             try
@@ -145,6 +167,10 @@ namespace ConsoleApp1
             }
         }
 
+        /// <summary>
+        /// Async version of getting categories 
+        /// </summary>
+        /// <returns></returns>
         public async Task<string[]> GetCategoriesAsync()
         {
             try

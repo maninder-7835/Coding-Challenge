@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
+
 namespace ConsoleApp1
 {
     class Program
@@ -97,7 +98,7 @@ namespace ConsoleApp1
                 printer.Value("How many jokes do you want? (1-9)").Print();
                 var input = GetEnteredKey(Console.ReadKey());
 
-                noOfJokes = Convert.ToInt32(input.ToString());
+                noOfJokes = Convert.ToInt32(Char.GetNumericValue(input));
                 if (noOfJokes != null && noOfJokes >= 1 && noOfJokes <= 9)
                     isValidNumber = true;
                 else

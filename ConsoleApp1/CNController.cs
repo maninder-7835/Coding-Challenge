@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ConsoleApp1
 {
-    public class CNController
+    public class CNController : ICNController
     {
         private List<string> cacheCategories = new List<string>();
 
